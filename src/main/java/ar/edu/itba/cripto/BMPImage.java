@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 
 public class BMPImage {
-    private final int BMP_HEADER_LENGHT = 54;
+    private static final int BMP_HEADER_LENGTH = 54;
     private byte[] header;
     private byte[] body;
     private int width;
@@ -15,21 +15,38 @@ public class BMPImage {
 
     public BMPImage(String path) throws IOException {
         try (RandomAccessFile file = new RandomAccessFile(path, "r")) {
-            header = new byte[BMP_HEADER_LENGHT];
+            header = new byte[BMP_HEADER_LENGTH];
             file.readFully(header);
 
-            int dataOffset = (header[13] << 24) | (header[12] << 16) | (header[11] << 8) | header[10];
-            long pixelLen = file.length() - dataOffset;
+            int dataOffset = readIntLE(header, 10);
+            width = readIntLE(header, 18);
+            height = readIntLE(header, 22);
+            bitsPerPixel = readShortLE(header, 28);
+            compression = readIntLE(header, 30);
 
+            if (compression != 0)
+                throw new IllegalArgumentException("Solo se admiten BMP sin compresión (compression=0).");
+
+            if (bitsPerPixel != 24)
+                throw new IllegalArgumentException("Solo se admiten BMP de 24 bits por píxel.");
+
+            long pixelLen = file.length() - dataOffset;
             body = new byte[(int) pixelLen];
             file.seek(dataOffset);
             file.readFully(body);
-
-            width = (header[21] << 24) | (header[20] << 16) | (header[19] << 8) | header[18];
-            height = (header[25] << 24) | (header[24] << 16) | (header[23] << 8) | header[22] ;
-            bitsPerPixel = (header[29] << 8) | header[28];
-            compression = (header[33] << 24) | (header[32] << 16) | (header[31] << 8) | header[30];
         }
+    }
+
+    private int readIntLE(byte[] buffer, int offset) {
+        return (buffer[offset] & 0xFF) |
+                ((buffer[offset + 1] & 0xFF) << 8) |
+                ((buffer[offset + 2] & 0xFF) << 16) |
+                ((buffer[offset + 3] & 0xFF) << 24);
+    }
+
+    private int readShortLE(byte[] buffer, int offset) {
+        return (buffer[offset] & 0xFF) |
+                ((buffer[offset + 1] & 0xFF) << 8);
     }
 
     public byte[] getHeader() { return header; }
@@ -38,15 +55,32 @@ public class BMPImage {
     public int getHeight() { return height; }
     public int getBitsPerPixel() { return bitsPerPixel; }
     public int getCompression() { return compression; }
-    public int getCapacityBytesForLSB1() { return (body.length) / 8; }
-    public int getCapacityBytesForLSB4() { return (body.length * 4) / 8; }
 
-    public void setBody(byte[] data) { this.body = data; }
+    public int getCapacityBytesForLSB1() {
+        return body.length / 8;         // 1 bit por byte de pixel
+    }
+
+    public int getCapacityBytesForLSB4() {
+        return (body.length * 4) / 8;   // 4 bits por byte de pixel
+    }
+
+    public void setBody(byte[] data) {
+        if (data.length != body.length) {
+            throw new IllegalArgumentException("El nuevo cuerpo debe tener el mismo tamaño que el original.");
+        }
+        this.body = data;
+    }
 
     public void save(String path) throws IOException {
         try (FileOutputStream output = new FileOutputStream(path)) {
             output.write(header);
             output.write(body);
         }
+    }
+
+    @Override
+    public String toString() {
+        return String.format("BMPImage [width=%d, height=%d, bpp=%d, compression=%d, bodySize=%d]",
+                width, height, bitsPerPixel, compression, body.length);
     }
 }
