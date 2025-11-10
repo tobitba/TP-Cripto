@@ -1,26 +1,22 @@
 package ar.edu.itba.cripto.algorithms;
 
 import ar.edu.itba.cripto.BMPImage;
+import ar.edu.itba.cripto.StegoUtils;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class LSB1 implements IStegoAlgorithm {
 
-    public BMPImage encode(BMPImage image, String fileToHide) throws IOException {
-        byte[] data = Files.readAllBytes(Path.of(fileToHide));
+    @Override
+    public BMPImage encode(BMPImage image, byte[] dataToHide) throws IOException {
         int capacity = image.getCapacityBytesForLSB1();
 
-        if (data.length + 4 > capacity)
-            throw new IllegalArgumentException("El archivo es demasiado grande para ocultarse en esta imagen.\n Capacidad máxima: " + capacity + " bytes, Tamaño del archivo: " + data.length + " bytes.");
-
+        if (dataToHide.length > capacity) {
+            throw new IllegalArgumentException("El archivo es demasiado grande para ocultarse en esta imagen.\nCapacidad máxima: " + capacity + " bytes, Tamaño requerido: " + dataToHide.length + " bytes.");
+        }
         byte[] body = image.getBody().clone();
-        byte[] lengthBytes = StegoUtils.intToBytes(data.length);
-        byte[] dataToHide = new byte[lengthBytes.length + data.length];
-
-        System.arraycopy(lengthBytes, 0, dataToHide, 0, lengthBytes.length);
-        System.arraycopy(data, 0, dataToHide, lengthBytes.length, data.length);
-
         int byteIndex = 0;
 
         for (byte dataByte : dataToHide) {
@@ -32,11 +28,36 @@ public class LSB1 implements IStegoAlgorithm {
         }
 
         image.setBody(body);
-
         return image;
     }
 
+    @Override
     public void decode(BMPImage image, String outputPath) throws IOException {
-        // TODO!
+        byte[] body = image.getBody();
+        byte[] extracted = new byte[body.length / 8];
+        int byteIndex = 0;
+        int bitCount = 0;
+
+        for (byte _byte_ : body) {
+            int bit = _byte_ & 1;
+            extracted[byteIndex] = (byte) ((extracted[byteIndex] << 1) | bit);
+            bitCount++;
+
+            if (bitCount == 8) {
+                bitCount = 0;
+                byteIndex++;
+
+                if (byteIndex >= extracted.length)
+                    break;
+            }
+        }
+        StegoUtils.ExtractedData data = StegoUtils.extractDataBlock(extracted);
+        String finalPath = outputPath;
+
+        if (data.extension() != null && !data.extension().isEmpty()) {
+            finalPath += data.extension();
+        }
+
+        Files.write(Path.of(finalPath), data.fileData());
     }
 }

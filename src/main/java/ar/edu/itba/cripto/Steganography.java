@@ -1,16 +1,20 @@
 package ar.edu.itba.cripto;
 
+import ar.edu.itba.cripto.actions.Analyzer;
+import ar.edu.itba.cripto.actions.Embedder;
+import ar.edu.itba.cripto.actions.Extractor;
+
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 public class Steganography {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         if (args.length == 0) {
             printProgramUsage();
             System.exit(1);
         }
-
         Map<String, String> params = parseArguments(args);
 
         if (params.containsKey("-embed")) {
@@ -20,7 +24,7 @@ public class Steganography {
         } else if (params.containsKey("-analyze")) {
             new Analyzer().analyze(params);
         } else {
-            System.out.println("Debe especificar un modo (-embed | -extract | -analyze)");
+            System.out.println("Debe especificar una acción (-embed | -extract | -analyze)");
             printProgramUsage();
             System.exit(1);
         }

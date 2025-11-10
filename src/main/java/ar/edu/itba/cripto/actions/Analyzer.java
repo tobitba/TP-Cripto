@@ -1,4 +1,4 @@
-package ar.edu.itba.cripto;
+package ar.edu.itba.cripto.actions;
 
 import java.io.File;
 import java.util.Map;
