@@ -1,0 +1,85 @@
+package ar.edu.itba.cripto.algorithms;
+
+import javax.crypto.*;
+import javax.crypto.spec.*;
+import java.security.spec.KeySpec;
+import java.util.Arrays;
+
+public class Encryption {
+
+    private static final byte[] SALT = new byte[8];     // 0x0000000000000000
+    private static final int PBKDF2_ITERATIONS = 2000;
+
+    private static class KeyAndIV {
+
+        byte[] key;
+        byte[] iv;
+        KeyAndIV(byte[] key, byte[] iv) { this.key = key; this.iv = iv; }
+    }
+
+    private static KeyAndIV deriveKeyAndIV(String algorithm, String mode, String password) throws Exception {
+
+        int keyBits = switch (algorithm.toLowerCase()) {
+            case "aes128" -> 128;
+            case "aes192" -> 192;
+            case "aes256" -> 256;
+            case "3des"   -> 192;
+            default -> throw new IllegalArgumentException("Algoritmo no soportado: " + algorithm);
+        };
+
+        int ivBits = switch (mode.toLowerCase()) {
+            case "ecb" -> 0;
+            case "cfb" -> 8;
+            case "ofb" -> 128;
+            case "cbc" -> 128;
+            default -> throw new IllegalArgumentException("Modo no soportado: " + mode);
+        };
+
+        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+        KeySpec spec = new PBEKeySpec(password.toCharArray(), SALT, PBKDF2_ITERATIONS, keyBits + ivBits);
+
+        byte[] derived = factory.generateSecret(spec).getEncoded();
+        byte[] key = Arrays.copyOfRange(derived, 0, keyBits / 8);
+        byte[] iv  = Arrays.copyOfRange(derived, keyBits / 8, (keyBits + ivBits) / 8);
+
+        return new KeyAndIV(key, iv);
+    }
+
+    public static byte[] encrypt(byte[] data, String algorithm, String mode, String password) throws Exception {
+
+        KeyAndIV k = deriveKeyAndIV(algorithm, mode, password);
+        Cipher cipher = Cipher.getInstance(normalize(algorithm, mode));
+        SecretKeySpec keySpec = new SecretKeySpec(k.key, baseCipherName(algorithm));
+
+        if (k.iv.length == 0)
+            cipher.init(Cipher.ENCRYPT_MODE, keySpec);
+        else
+            cipher.init(Cipher.ENCRYPT_MODE, keySpec, new IvParameterSpec(k.iv));
+
+        return cipher.doFinal(data);
+    }
+
+    public static byte[] decrypt(byte[] data, String algorithm, String mode, String password) throws Exception {
+
+        KeyAndIV k = deriveKeyAndIV(algorithm, mode, password);
+        Cipher cipher = Cipher.getInstance(normalize(algorithm, mode));
+        SecretKeySpec keySpec = new SecretKeySpec(k.key, baseCipherName(algorithm));
+
+        if (k.iv.length == 0)
+            cipher.init(Cipher.DECRYPT_MODE, keySpec);
+        else
+            cipher.init(Cipher.DECRYPT_MODE, keySpec, new IvParameterSpec(k.iv));
+
+        return cipher.doFinal(data);
+    }
+
+    private static String baseCipherName(String algorithm) {
+
+        return algorithm.equalsIgnoreCase("3des") ? "DESede" : "AES";
+    }
+
+    private static String normalize(String algorithm, String mode) {
+
+        return baseCipherName(algorithm) + "/" + mode.toUpperCase() + "/PKCS5Padding";
+    }
+}

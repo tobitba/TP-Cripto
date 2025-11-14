@@ -11,11 +11,12 @@ public class LSB4 implements IStegoAlgorithm {
 
     @Override
     public BMPImage encode(BMPImage image, byte[] dataToHide) throws IOException {
+
         int capacity = image.getCapacityBytesForLSB4();
 
-        if (dataToHide.length > capacity) {
+        if (dataToHide.length > capacity)
             throw new IllegalArgumentException("El archivo es demasiado grande para ocultarse en esta imagen.\nCapacidad máxima: " + capacity + " bytes, Tamaño requerido: " + dataToHide.length + " bytes.");
-        }
+
         byte[] body = image.getBody().clone();
         int byteIndex = 0;
 
@@ -35,6 +36,7 @@ public class LSB4 implements IStegoAlgorithm {
 
     @Override
     public void decode(BMPImage image, String outputPath) throws IOException {
+
         byte[] body = image.getBody();
         int dataLength = body.length / 2;
         byte[] extracted = new byte[dataLength];
@@ -46,13 +48,11 @@ public class LSB4 implements IStegoAlgorithm {
 
             extracted[byteIndex++] = (byte) ((highNibble << 4) | lowNibble);
         }
-
         StegoUtils.ExtractedData data = StegoUtils.extractDataBlock(extracted);
         String finalPath = outputPath;
 
-        if (data.extension() != null && !data.extension().isEmpty()) {
+        if (data.extension() != null && !data.extension().isEmpty())
             finalPath += data.extension();
-        }
 
         Files.write(Path.of(finalPath), data.fileData());
     }
