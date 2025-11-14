@@ -28,10 +28,10 @@ public class Embedder {
         if (password != null) {
             dataBlock = Encryption.encrypt(dataBlock, encAlgorithm, mode, password);
 
-            byte[] len = StegoUtils.intToBytes(dataBlock.length);
+            byte[] length = StegoUtils.getSizeInBigEndian() ? StegoUtils.intToBytesBE(dataBlock.length) : StegoUtils.intToBytesLE(dataBlock.length);
             byte[] finalBlock = new byte[4 + dataBlock.length];
 
-            System.arraycopy(len, 0, finalBlock, 0, 4);
+            System.arraycopy(length, 0, finalBlock, 0, 4);
             System.arraycopy(dataBlock, 0, finalBlock, 4, dataBlock.length);
 
             dataBlock = finalBlock;

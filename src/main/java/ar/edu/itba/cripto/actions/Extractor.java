@@ -20,6 +20,8 @@ public class Extractor {
         String encAlgorithm = params.get("-a");
         String mode = params.get("-m");
 
+        validateInputs(carrierFile, stegMethod, password, encAlgorithm, mode);
+
         if (!new File(carrierFile).exists())
             throw new IllegalArgumentException("El archivo portador no existe: " + carrierFile);
 
@@ -40,7 +42,7 @@ public class Extractor {
             if (rawExtracted.length < 4)
                 throw new IllegalArgumentException("La imagen no contiene datos cifrados válidos.");
 
-            int cipherLength = StegoUtils.bytesToInt(rawExtracted);
+            int cipherLength = StegoUtils.getSizeInBigEndian() ? StegoUtils.bytesToIntBE(rawExtracted) : StegoUtils.bytesToIntLE(rawExtracted);
             byte[] cipherText = new byte[cipherLength];
 
             if (cipherLength <= 0 || cipherLength > rawExtracted.length - 4)
@@ -60,6 +62,19 @@ public class Extractor {
             finalOut += data.extension();
 
         Files.write(Path.of(finalOut), data.fileData());
+    }
+
+    private void validateInputs(String carrierFile, String stegMethod,
+                                String password, String encAlgorithm, String mode) {
+
+        if (carrierFile == null || !new File(carrierFile).exists())
+            throw new IllegalArgumentException("El archivo portador no existe: " + carrierFile);
+
+        if (stegMethod == null)
+            throw new IllegalArgumentException("Debe especificar el método esteganográfico (-steg LSB1 | LSB4 | LSBI)");
+
+        if (password != null && (encAlgorithm == null || mode == null))
+            throw new IllegalArgumentException("Debe especificar -a y -m si usa '-pass'");
     }
 }
 

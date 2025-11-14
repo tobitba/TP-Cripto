@@ -13,16 +13,25 @@ import java.util.Arrays;
 
 public class StegoUtils {
 
+    private static Boolean sizeInBigEndian = true;
     private StegoUtils() {  }
 
     public record ExtractedData(byte[] fileData, String extension) {  }
 
-    public static byte[] intToBytes(int value) {
+    public static byte[] intToBytesBE(int value) {
         return new byte[] { (byte) (value >> 24), (byte) (value >> 16), (byte) (value >> 8), (byte) value };
     }
 
-    public static int bytesToInt(byte[] bytes) {
+    public static byte[] intToBytesLE(int value) {
+        return new byte[] { (byte) (value), (byte) (value >> 8), (byte) (value >> 16), (byte) (value >> 24) };
+    }
+
+    public static int bytesToIntBE(byte[] bytes) {
         return ((bytes[0] & 0xFF) << 24) | ((bytes[1] & 0xFF) << 16) | ((bytes[2] & 0xFF) << 8) | (bytes[3] & 0xFF);
+    }
+
+    public static int bytesToIntLE(byte[] bytes) {
+        return ((bytes[0] & 0xFF) | ((bytes[1] & 0xFF) << 8) | ((bytes[2] & 0xFF) << 16) | ((bytes[3] & 0xFF) << 24));
     }
 
     public static byte[] buildDataBlock(String filePath) throws IOException {
@@ -30,7 +39,7 @@ public class StegoUtils {
 
         byte[] extensionBytes = (("." + extension) + "\0").getBytes(StandardCharsets.UTF_8);
         byte[] fileData = Files.readAllBytes(Path.of(filePath));
-        byte[] sizeBytes = intToBytes(fileData.length);
+        byte[] sizeBytes = sizeInBigEndian ? intToBytesBE(fileData.length) : intToBytesLE(fileData.length);
         byte[] data = new byte[sizeBytes.length + fileData.length + extensionBytes.length];
 
         System.arraycopy(sizeBytes, 0, data, 0, sizeBytes.length);
@@ -46,9 +55,8 @@ public class StegoUtils {
         return (dotIndex == -1 || dotIndex == filePath.length() - 1) ? "" : filePath.substring(dotIndex + 1);
     }
 
-
     public static ExtractedData extractDataBlock(byte[] hiddenData) {
-        int size = bytesToInt(Arrays.copyOfRange(hiddenData, 0, 4));
+        int size = sizeInBigEndian ? bytesToIntBE(Arrays.copyOfRange(hiddenData, 0, 4)) :  bytesToIntLE(Arrays.copyOfRange(hiddenData, 0, 4));
         byte[] fileData = Arrays.copyOfRange(hiddenData, 4, 4 + size);
         int extensionStartPosition = 4 + size;
         int extensionEndPosition = extensionStartPosition;
@@ -68,5 +76,9 @@ public class StegoUtils {
             case "LSBI" -> new LSBI();
             default -> throw new IllegalArgumentException("Método no soportado: " + method);
         };
+    }
+
+    public static Boolean getSizeInBigEndian() {
+        return sizeInBigEndian;
     }
 }

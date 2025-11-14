@@ -9,11 +9,12 @@ public class LSBI implements IStegoAlgorithm {
 
     private static final int PATTERN_BIT_MASK = 0b00000110;
     private static final int PATTERNS = 4;
+    private Boolean useRedChannel = true;
 
     @Override
     public byte[] encode(byte[] imagePixels, byte[] dataToHide) {
 
-        int capacityBytes = ((imagePixels.length - PATTERNS ) * 2) / 3 / 8; // Pixeles rojos no codifican data
+        int capacityBytes = useRedChannel ? (imagePixels.length - PATTERNS) / 8 : ((imagePixels.length - PATTERNS ) * 2) / 3 / 8;
 
         if (dataToHide.length > capacityBytes)
             throw new IllegalArgumentException("El archivo es demasiado grande para ocultarse en esta imagen.\nCapacidad máxima: " + capacityBytes + " bytes, Tamaño requerido: " + dataToHide.length + " bytes.");
@@ -27,8 +28,8 @@ public class LSBI implements IStegoAlgorithm {
         for (byte dataByte : dataToHide) {                  // Sacar métricas para cada patrón de bits
             for (int bit = 7; bit >= 0; bit--) {
 
-                if (imagePixelsIndex % 3 == 2)
-                { imagePixelsIndex++; }                     // Salteamos los pixeles ROJOS
+                if (!useRedChannel && imagePixelsIndex % 3 == 2)
+                { imagePixelsIndex++; }
 
                 int dataBit = (dataByte >> bit) & 1;
                 int pattern = (imagePixels[imagePixelsIndex] & PATTERN_BIT_MASK) >> 1;
@@ -52,8 +53,8 @@ public class LSBI implements IStegoAlgorithm {
         for (byte dataByte : dataToHide) {
             for (int bit = 7; bit >= 0; bit--) {
 
-                if (imagePixelsIndex % 3 == 2)
-                { imagePixelsIndex++; }                     // Salteamos los pixeles ROJOS
+                if (!useRedChannel && imagePixelsIndex % 3 == 2)
+                { imagePixelsIndex++; }
 
                 int dataBit = (dataByte >> bit) & 1;
                 int pattern = (encoded[imagePixelsIndex] & PATTERN_BIT_MASK) >> 1;
@@ -84,7 +85,7 @@ public class LSBI implements IStegoAlgorithm {
             patternInvertCondition.put(imagePixelsIndex, (imagePixels[imagePixelsIndex] & 1) == 1);
         }
 
-        int capacityBytes = ((imagePixels.length - PATTERNS) * 2) / 3 / 8; // Pixeles rojos no codifican data
+        int capacityBytes = useRedChannel ? (imagePixels.length - PATTERNS) / 8 : ((imagePixels.length - PATTERNS ) * 2) / 3 / 8;
         byte[] extracted = new byte[capacityBytes];
         int dataPos = 0;
         int bitsBuffer = 0;
@@ -92,7 +93,7 @@ public class LSBI implements IStegoAlgorithm {
 
         while (dataPos < capacityBytes) {
 
-            if (imagePixelsIndex % 3 == 2)
+            if (!useRedChannel && imagePixelsIndex % 3 == 2)
             { imagePixelsIndex++; }
 
             int pixel = imagePixels[imagePixelsIndex];
