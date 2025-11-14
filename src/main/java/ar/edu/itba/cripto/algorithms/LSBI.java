@@ -1,100 +1,117 @@
 package ar.edu.itba.cripto.algorithms;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
+
 public class LSBI implements IStegoAlgorithm {
 
-    private static final int GROUPS = 4;
+    private static final int PATTERN_BIT_MASK = 0b00000110;
+    private static final int PATTERNS = 4;
 
     @Override
     public byte[] encode(byte[] imagePixels, byte[] dataToHide) {
 
-        int capacity = imagePixels.length / 8;
-        byte[] encoded = imagePixels.clone();
+        int capacityBytes = ((imagePixels.length - PATTERNS ) * 2) / 3 / 8; // Pixeles rojos no codifican data
 
-        if (dataToHide.length + 1 > capacity)
-            throw new IllegalArgumentException("No hay suficiente capacidad en la imagen para LSBI.");
+        if (dataToHide.length > capacityBytes)
+            throw new IllegalArgumentException("El archivo es demasiado grande para ocultarse en esta imagen.\nCapacidad máxima: " + capacityBytes + " bytes, Tamaño requerido: " + dataToHide.length + " bytes.");
 
-        int[] pos = new int[GROUPS];    // Clasificación y detección de inversión por grupo
-        int[] neg = new int[GROUPS];
-        int imgIndex = 4;               // Primeros 4 bytes para los flags (uno por grupo)
+        SortedMap<Integer, Integer> patternChangeCount = new TreeMap<>();
+        Map<Integer, Boolean> patternInvertCondition = new HashMap<>();
+        byte[] encoded = new byte[imagePixels.length];
+        int imagePixelsIndex = PATTERNS;
 
-        // Calcular pos/neg para cada grupo
-        for (byte dataByte : dataToHide) {
+        for (byte dataByte : dataToHide) {                  // Sacar métricas para cada patrón de bits
             for (int bit = 7; bit >= 0; bit--) {
 
-                int messageBit = (dataByte >> bit) & 1;
-                int group = encoded[imgIndex] & 0b11;
-                int currentLSB = encoded[imgIndex] & 1;
+                if (imagePixelsIndex % 3 == 2)
+                { imagePixelsIndex++; }                     // Salteamos los pixeles ROJOS
 
-                if (messageBit == 1 && currentLSB == 0)
-                    pos[group]++;
-                else if (messageBit == 0 && currentLSB == 1)
-                    neg[group]++;
+                int dataBit = (dataByte >> bit) & 1;
+                int pattern = (imagePixels[imagePixelsIndex] & PATTERN_BIT_MASK) >> 1;
 
-                imgIndex++;
+                if (dataBit != (imagePixels[imagePixelsIndex] & 1))
+                { patternChangeCount.put(pattern, patternChangeCount.getOrDefault(pattern, 0) + 1); }
+
+                imagePixelsIndex++;
             }
         }
 
-        byte[] invertGroup = new byte[GROUPS];
-
-        for (int g = 0; g < GROUPS; g++) {   // Determinar inversiones
-            invertGroup[g] = (byte) ((neg[g] > pos[g]) ? 1 : 0);
+        for (Map.Entry<Integer, Integer> entry : patternChangeCount.entrySet()) {
+            Boolean patternInvertConditionValue = entry.getValue() > capacityBytes / 2 / PATTERNS;
+            patternInvertCondition.put(entry.getKey(), patternInvertConditionValue);
         }
 
-        imgIndex = 4;
-        byte[] realEncoded = imagePixels.clone();
+        imagePixelsIndex = PATTERNS;
 
         for (byte dataByte : dataToHide) {
             for (int bit = 7; bit >= 0; bit--) {
 
-                int b = (dataByte >> bit) & 1;
-                int group = realEncoded[imgIndex] & 0b11;
+                if (imagePixelsIndex % 3 == 2)
+                { imagePixelsIndex++; }                     // Salteamos los pixeles ROJOS
 
-                if (invertGroup[group] == 1)
-                { b = 1 - b; }              // invertir bit
+                int dataBit = (dataByte >> bit) & 1;
+                int pattern = (encoded[imagePixelsIndex] & PATTERN_BIT_MASK) >> 1;
 
-                realEncoded[imgIndex] = (byte) ((realEncoded[imgIndex] & 0xFE) | b);
-                imgIndex++;
+                if (patternInvertCondition.getOrDefault(pattern, false))
+                { dataBit = 1 - dataBit; }
+
+                encoded[imagePixelsIndex] = (byte) ((imagePixels[imagePixelsIndex] & 0xFE) | dataBit);
+                imagePixelsIndex++;
             }
         }
 
-        System.arraycopy(invertGroup, 0, realEncoded, 0, GROUPS);   // Guardar flags
+        imagePixelsIndex = 0;
 
-        return realEncoded;
+        for (Map.Entry<Integer, Integer> entry : patternChangeCount.entrySet()) {
+            int invertedDataBit = patternInvertCondition.getOrDefault(entry.getKey(), false) ? 1 : 0;
+            encoded[imagePixelsIndex] = (byte) ((encoded[imagePixelsIndex] & 0xFE) | invertedDataBit);
+            imagePixelsIndex++;
+        }
+
+        return encoded;
     }
 
     @Override
     public byte[] decode(byte[] imagePixels) {
 
-        byte[] invertGroup = new byte[GROUPS];
+        Map<Integer, Boolean> patternInvertCondition = new HashMap<>();
+        int imagePixelsIndex = 0;
 
-        System.arraycopy(imagePixels, 0, invertGroup, 0, GROUPS);
+        for (; imagePixelsIndex < PATTERNS; imagePixelsIndex++) {
+            patternInvertCondition.put(imagePixelsIndex, (imagePixels[imagePixelsIndex] & 1) == 1);
+        }
 
-        int imgIndex = 4;
-        int extractedByteCount = (imagePixels.length - 4) / 8;
-        byte[] extracted = new byte[extractedByteCount];
-        int byteIndex = 0;
+        int capacityBytes = ((imagePixels.length - PATTERNS ) * 2) / 3 / 8; // Pixeles rojos no codifican data
+        byte[] extracted = new byte[capacityBytes];
+        int dataPos = 0;
+        int bitsBuffer = 0;
         int bitCount = 0;
 
-        while (imgIndex < imagePixels.length) {
+        while (dataPos < capacityBytes) {
 
-            int group = imagePixels[imgIndex] & 0b11;
-            int bit = imagePixels[imgIndex] & 1;
+            if (imagePixelsIndex % 3 == 2)
+            { imagePixelsIndex++; }
 
-            if (invertGroup[group] == 1)
-            { bit = 1 - bit; }
+            int pixel = imagePixels[imagePixelsIndex];
+            int pattern = (pixel & PATTERN_BIT_MASK) >> 1;
+            int dataBit = pixel & 1;
 
-            extracted[byteIndex] = (byte) ((extracted[byteIndex] << 1) | bit);
+            if (patternInvertCondition.getOrDefault(pattern, false))
+            { dataBit ^= 1; }
+
+            bitsBuffer = (bitsBuffer << 1) | dataBit;
             bitCount++;
 
             if (bitCount == 8) {
+                extracted[dataPos++] = (byte) bitsBuffer;
+                bitsBuffer = 0;
                 bitCount = 0;
-                byteIndex++;
-
-                if (byteIndex >= extracted.length)
-                { break; }
             }
 
-            imgIndex++;
+            imagePixelsIndex++;
         }
 
         return extracted;

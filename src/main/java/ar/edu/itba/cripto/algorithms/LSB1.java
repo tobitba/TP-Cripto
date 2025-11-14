@@ -15,8 +15,8 @@ public class LSB1 implements IStegoAlgorithm {
 
         for (byte dataByte : dataToHide) {
             for (int bit = 7; bit >= 0; bit--) {
-                int messageBit = (dataByte >> bit) & 1;
-                encoded[byteIndex] = (byte) ((imagePixels[byteIndex] & 0xFE) | messageBit);
+                int dataBit = (dataByte >> bit) & 1;
+                encoded[byteIndex] = (byte) ((imagePixels[byteIndex] & 0xFE) | dataBit);
                 byteIndex++;
             }
         }
@@ -32,8 +32,8 @@ public class LSB1 implements IStegoAlgorithm {
         int bitCount = 0;
 
         for (byte dataByte : imagePixels) {
-            int bit = dataByte & 1;
-            extracted[byteIndex] = (byte) ((extracted[byteIndex] << 1) | bit);
+            int dataBit = dataByte & 1;
+            extracted[byteIndex] = (byte) ((extracted[byteIndex] << 1) | dataBit);
             bitCount++;
 
             if (bitCount == 8) {
