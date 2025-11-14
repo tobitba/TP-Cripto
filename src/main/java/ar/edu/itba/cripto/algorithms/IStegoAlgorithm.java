@@ -1,11 +1,8 @@
 package ar.edu.itba.cripto.algorithms;
 
-import ar.edu.itba.cripto.BMPImage;
-import java.io.IOException;
-
 public interface IStegoAlgorithm {
 
-    BMPImage encode(BMPImage image, byte[] dataToHide) throws IOException;
+    byte[] encode(byte[] imagePixels, byte[] dataToHide);
 
-    void decode(BMPImage image, String outputPath) throws IOException;
+    byte[] decode(byte[] imagePixels);
 }
