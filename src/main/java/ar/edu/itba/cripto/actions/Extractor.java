@@ -20,9 +20,6 @@ public class Extractor {
         String encAlgorithm = params.get("-a");
         String mode = params.get("-m");
 
-        System.out.println("Imagen portadora: " + carrierFile);
-        System.out.println("Método esteganográfico: " + stegMethod);
-
         if (!new File(carrierFile).exists())
             throw new IllegalArgumentException("El archivo portador no existe: " + carrierFile);
 

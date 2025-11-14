@@ -21,11 +21,6 @@ public class Embedder {
 
         validateInputs(inputFile, carrierFile, stegMethod, password, encAlgorithm, mode);
 
-        System.out.println("Archivo a ocultar: " + inputFile);
-        System.out.println("Imagen portadora: " + carrierFile);
-        System.out.println("Archivo de salida: " + outputFile);
-        System.out.println("Método esteganográfico: " + stegMethod);
-
         BMPImage image = new BMPImage(carrierFile);
         byte[] pixels = image.getBody();
         byte[] dataBlock = StegoUtils.buildDataBlock(inputFile);
@@ -48,6 +43,9 @@ public class Embedder {
 
         image.setBody(encodedPixels);
         image.save(outputFile);
+
+        System.out.println("\nHecho!");
+        System.out.println("Data de " + dataBlock.length + " bytes codificada en imagen de " + (image.getHeader().length + encodedPixels.length) + " bytes.");
     }
 
     private void validateInputs(String inputFile, String carrierFile, String stegMethod,

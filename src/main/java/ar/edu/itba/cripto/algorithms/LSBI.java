@@ -20,7 +20,7 @@ public class LSBI implements IStegoAlgorithm {
 
         SortedMap<Integer, Integer> patternChangeCount = new TreeMap<>();
         Map<Integer, Boolean> patternInvertCondition = new HashMap<>();
-        byte[] encoded = new byte[imagePixels.length];
+        byte[] encoded = imagePixels.clone();
         int imagePixelsIndex = PATTERNS;
 
         for (byte dataByte : dataToHide) {                  // Sacar métricas para cada patrón de bits
@@ -58,7 +58,7 @@ public class LSBI implements IStegoAlgorithm {
                 if (patternInvertCondition.getOrDefault(pattern, false))
                 { dataBit = 1 - dataBit; }
 
-                encoded[imagePixelsIndex] = (byte) ((imagePixels[imagePixelsIndex] & 0xFE) | dataBit);
+                encoded[imagePixelsIndex] = (byte) ((encoded[imagePixelsIndex] & 0xFE) | dataBit);
                 imagePixelsIndex++;
             }
         }

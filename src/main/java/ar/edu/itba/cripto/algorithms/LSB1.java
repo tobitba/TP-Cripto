@@ -10,13 +10,13 @@ public class LSB1 implements IStegoAlgorithm {
         if (dataToHide.length > imageDataCapacityBytes)
             throw new IllegalArgumentException("El archivo es demasiado grande para ocultarse en esta imagen.\nCapacidad máxima: " + imageDataCapacityBytes + " bytes, Tamaño requerido: " + dataToHide.length + " bytes.");
 
-        byte[] encoded = new byte[imagePixels.length];
+        byte[] encoded = imagePixels.clone();
         int byteIndex = 0;
 
         for (byte dataByte : dataToHide) {
             for (int bit = 7; bit >= 0; bit--) {
                 int dataBit = (dataByte >> bit) & 1;
-                encoded[byteIndex] = (byte) ((imagePixels[byteIndex] & 0xFE) | dataBit);
+                encoded[byteIndex] = (byte) ((encoded[byteIndex] & 0xFE) | dataBit);
                 byteIndex++;
             }
         }
