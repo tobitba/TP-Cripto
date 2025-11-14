@@ -8,13 +8,21 @@ import java.util.Arrays;
 public class Encryption {
 
     private static final byte[] SALT = new byte[8];     // 0x0000000000000000
-    private static final int PBKDF2_ITERATIONS = 2000;
+    private static final int PBKDF2_ITERATIONS = 10000;
 
     private static class KeyAndIV {
         byte[] key;
         byte[] iv;
 
         KeyAndIV(byte[] key, byte[] iv) { this.key = key; this.iv = iv; }
+    }
+
+    private static int blockSizeBits(String algorithm) {
+        return switch (algorithm.toLowerCase()) {
+            case "aes128", "aes192", "aes256" -> 128;
+            case "3des" -> 64;
+            default -> throw new IllegalArgumentException("Algoritmo no soportado: " + algorithm);
+        };
     }
 
     private static KeyAndIV deriveKeyAndIV(String algorithm, String mode, String password) throws Exception {
@@ -27,11 +35,11 @@ public class Encryption {
             default -> throw new IllegalArgumentException("Algoritmo no soportado: " + algorithm);
         };
 
+        int blockSize = blockSizeBits(algorithm);
+
         int ivBits = switch (mode.toLowerCase()) {
             case "ecb" -> 0;
-            case "cfb" -> 8;
-            case "ofb" -> 128;
-            case "cbc" -> 128;
+            case "cbc", "cfb", "ofb", "cfb8", "ofb8" -> blockSize;
             default -> throw new IllegalArgumentException("Modo no soportado: " + mode);
         };
 

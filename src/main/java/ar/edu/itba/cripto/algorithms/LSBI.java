@@ -9,7 +9,7 @@ public class LSBI implements IStegoAlgorithm {
 
     private static final int PATTERN_BIT_MASK = 0b00000110;
     private static final int PATTERNS = 4;
-    private Boolean useRedChannel = true;
+    private Boolean useRedChannel = false;
 
     @Override
     public byte[] encode(byte[] imagePixels, byte[] dataToHide) {

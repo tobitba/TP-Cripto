@@ -25,7 +25,7 @@ public class Embedder {
         byte[] pixels = image.getBody();
         byte[] dataBlock = StegoUtils.buildDataBlock(inputFile);
 
-        if (password != null) {
+        if (encAlgorithm != null) {
             dataBlock = Encryption.encrypt(dataBlock, encAlgorithm, mode, password);
 
             byte[] length = StegoUtils.getSizeInBigEndian() ? StegoUtils.intToBytesBE(dataBlock.length) : StegoUtils.intToBytesLE(dataBlock.length);
