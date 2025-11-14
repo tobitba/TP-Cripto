@@ -39,7 +39,7 @@ public class Encryption {
 
         int ivBits = switch (mode.toLowerCase()) {
             case "ecb" -> 0;
-            case "cbc", "cfb", "ofb", "cfb8", "ofb8" -> blockSize;
+            case "cbc", "cfb", "cfb8", "ofb", "ofb8" -> blockSize;
             default -> throw new IllegalArgumentException("Modo no soportado: " + mode);
         };
 
@@ -82,12 +82,30 @@ public class Encryption {
     }
 
     private static String baseCipherName(String algorithm) {
-
         return algorithm.equalsIgnoreCase("3des") ? "DESede" : "AES";
     }
 
     private static String normalize(String algorithm, String mode) {
 
-        return baseCipherName(algorithm) + "/" + mode.toUpperCase() + "/PKCS5Padding";
+        String alg = baseCipherName(algorithm);
+        String m = mode.toLowerCase();
+
+        if (m.equals("cfb") || m.equals("cfb8")) {
+            return alg + "/CFB8/NoPadding";
+        }
+
+        if (m.equals("ofb") || m.equals("ofb8")) {
+            return alg + "/OFB/NoPadding";
+        }
+
+        if (m.equals("cbc")) {
+            return alg + "/CBC/PKCS5Padding";
+        }
+
+        if (m.equals("ecb")) {
+            return alg + "/ECB/PKCS5Padding";
+        }
+
+        return alg + "/" + mode.toUpperCase() + "/PKCS5Padding";
     }
 }
