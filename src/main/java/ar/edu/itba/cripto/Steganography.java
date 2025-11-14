@@ -10,10 +10,12 @@ import java.util.Map;
 public class Steganography {
 
     public static void main(String[] args) throws Exception {
+
         if (args.length == 0) {
             printProgramUsage();
             System.exit(1);
         }
+
         Map<String, String> params = parseArguments(args);
 
         if (params.containsKey("-embed")) {
@@ -30,6 +32,7 @@ public class Steganography {
     }
 
     private static void printProgramUsage() {
+
         System.out.println("Uso del programa:");
         System.out.println("  -embed   : Ocultar un archivo dentro de un BMP");
         System.out.println("  -extract : Extraer un archivo oculto de un BMP");
@@ -38,7 +41,9 @@ public class Steganography {
     }
 
     private static Map<String, String> parseArguments(String[] args) {
+
         Map<String, String> params = new HashMap<>();
+
         for (int i = 0; i < args.length; i++) {
             if (args[i].startsWith("-") && i + 1 < args.length && !args[i + 1].startsWith("-")) {
                 params.put(args[i].toLowerCase(), args[i + 1]);
@@ -47,6 +52,7 @@ public class Steganography {
                 params.put(args[i].toLowerCase(), null);
             }
         }
+
         return params;
     }
 }

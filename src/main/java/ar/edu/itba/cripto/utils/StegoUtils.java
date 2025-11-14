@@ -1,4 +1,9 @@
-package ar.edu.itba.cripto;
+package ar.edu.itba.cripto.utils;
+
+import ar.edu.itba.cripto.algorithms.IStegoAlgorithm;
+import ar.edu.itba.cripto.algorithms.LSB1;
+import ar.edu.itba.cripto.algorithms.LSB4;
+import ar.edu.itba.cripto.algorithms.LSBI;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -53,5 +58,14 @@ public class StegoUtils {
         String extension = new String(Arrays.copyOfRange(hiddenData, extensionStartPosition, extensionEndPosition), StandardCharsets.UTF_8);
 
         return new ExtractedData(fileData, extension);
+    }
+
+    public static IStegoAlgorithm selectAlgorithm(String method) {
+        return switch (method.toUpperCase()) {
+            case "LSB1" -> new LSB1();
+            case "LSB4" -> new LSB4();
+            case "LSBI" -> new LSBI();
+            default -> throw new IllegalArgumentException("Método no soportado: " + method);
+        };
     }
 }

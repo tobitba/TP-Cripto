@@ -1,7 +1,7 @@
 package ar.edu.itba.cripto.actions;
 
-import ar.edu.itba.cripto.BMPImage;
-import ar.edu.itba.cripto.StegoUtils;
+import ar.edu.itba.cripto.utils.BMPImage;
+import ar.edu.itba.cripto.utils.StegoUtils;
 import ar.edu.itba.cripto.algorithms.*;
 
 import java.io.File;
@@ -40,11 +40,10 @@ public class Embedder {
             System.arraycopy(dataBlock, 0, finalBlock, 4, dataBlock.length);
 
             dataBlock = finalBlock;
-
             System.out.println("Data block cifrado (" + dataBlock.length + " bytes)");
         }
 
-        IStegoAlgorithm stego = selectAlgorithm(stegMethod);
+        IStegoAlgorithm stego = StegoUtils.selectAlgorithm(stegMethod);
         byte[] encodedPixels = stego.encode(pixels, dataBlock);
 
         image.setBody(encodedPixels);
@@ -65,14 +64,5 @@ public class Embedder {
 
         if (password != null && (encAlgorithm == null || mode == null))
             throw new IllegalArgumentException("Debe especificar -a y -m si usa '-pass'");
-    }
-
-    private IStegoAlgorithm selectAlgorithm(String method) {
-        return switch (method.toUpperCase()) {
-            case "LSB1" -> new LSB1();
-            case "LSB4" -> new LSB4();
-            case "LSBI" -> new LSBI();
-            default -> throw new IllegalArgumentException("Método no soportado: " + method);
-        };
     }
 }
