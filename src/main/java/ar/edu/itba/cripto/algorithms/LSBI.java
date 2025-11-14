@@ -50,7 +50,7 @@ public class LSBI implements IStegoAlgorithm {
                 int group = realEncoded[imgIndex] & 0b11;
 
                 if (invertGroup[group] == 1)
-                    b = 1 - b;              // invertir bit
+                { b = 1 - b; }              // invertir bit
 
                 realEncoded[imgIndex] = (byte) ((realEncoded[imgIndex] & 0xFE) | b);
                 imgIndex++;
@@ -64,7 +64,39 @@ public class LSBI implements IStegoAlgorithm {
 
     @Override
     public byte[] decode(byte[] imagePixels) {
-        // TODO
-        return imagePixels;
+
+        byte[] invertGroup = new byte[GROUPS];
+
+        System.arraycopy(imagePixels, 0, invertGroup, 0, GROUPS);
+
+        int imgIndex = 4;
+        int extractedByteCount = (imagePixels.length - 4) / 8;
+        byte[] extracted = new byte[extractedByteCount];
+        int byteIndex = 0;
+        int bitCount = 0;
+
+        while (imgIndex < imagePixels.length) {
+
+            int group = imagePixels[imgIndex] & 0b11;
+            int bit = imagePixels[imgIndex] & 1;
+
+            if (invertGroup[group] == 1)
+            { bit = 1 - bit; }
+
+            extracted[byteIndex] = (byte) ((extracted[byteIndex] << 1) | bit);
+            bitCount++;
+
+            if (bitCount == 8) {
+                bitCount = 0;
+                byteIndex++;
+
+                if (byteIndex >= extracted.length)
+                { break; }
+            }
+
+            imgIndex++;
+        }
+
+        return extracted;
     }
 }
