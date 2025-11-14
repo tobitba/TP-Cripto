@@ -11,9 +11,9 @@ public class Encryption {
     private static final int PBKDF2_ITERATIONS = 2000;
 
     private static class KeyAndIV {
-
         byte[] key;
         byte[] iv;
+
         KeyAndIV(byte[] key, byte[] iv) { this.key = key; this.iv = iv; }
     }
 

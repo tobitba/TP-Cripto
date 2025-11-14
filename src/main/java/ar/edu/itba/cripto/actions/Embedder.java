@@ -32,6 +32,15 @@ public class Embedder {
 
         if (password != null) {
             dataBlock = Encryption.encrypt(dataBlock, encAlgorithm, mode, password);
+
+            byte[] len = StegoUtils.intToBytes(dataBlock.length);
+            byte[] finalBlock = new byte[4 + dataBlock.length];
+
+            System.arraycopy(len, 0, finalBlock, 0, 4);
+            System.arraycopy(dataBlock, 0, finalBlock, 4, dataBlock.length);
+
+            dataBlock = finalBlock;
+
             System.out.println("Data block cifrado (" + dataBlock.length + " bytes)");
         }
 
