@@ -1,59 +1,46 @@
 package ar.edu.itba.cripto.algorithms;
 
-import ar.edu.itba.cripto.BMPImage;
-import ar.edu.itba.cripto.StegoUtils;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
 public class LSB4 implements IStegoAlgorithm {
 
     @Override
-    public BMPImage encode(BMPImage image, byte[] dataToHide) throws IOException {
+    public byte[] encode(byte[] imagePixels, byte[] dataToHide) {
 
-        int capacity = image.getCapacityBytesForLSB4();
+        int capacityBytes = imagePixels.length / 2;
 
-        if (dataToHide.length > capacity)
-            throw new IllegalArgumentException("El archivo es demasiado grande para ocultarse en esta imagen.\nCapacidad máxima: " + capacity + " bytes, Tamaño requerido: " + dataToHide.length + " bytes.");
+        if (dataToHide.length > capacityBytes)
+            throw new IllegalArgumentException("El archivo es demasiado grande para ocultarse en esta imagen.\nCapacidad máxima: " + capacityBytes + " bytes, Tamaño requerido: " + dataToHide.length + " bytes.");
 
-        byte[] body = image.getBody().clone();
-        int byteIndex = 0;
+        byte[] encoded = imagePixels.clone();
+        int index = 0;
 
         for (byte dataByte : dataToHide) {
-            int highNibble = (dataByte >> 4) & 0x0F;
-            int lowNibble = dataByte & 0x0F;
 
-            body[byteIndex] = (byte) ((body[byteIndex] & 0xF0) | highNibble);
-            body[byteIndex + 1] = (byte) ((body[byteIndex + 1] & 0xF0) | lowNibble);
-            byteIndex += 2;
+            int highNibble = (dataByte >> 4) & 0x0F;
+            int lowNibble  = dataByte & 0x0F;
+
+            encoded[index]     = (byte) ((encoded[index]     & 0xF0) | highNibble);
+            encoded[index + 1] = (byte) ((encoded[index + 1] & 0xF0) | lowNibble);
+            index += 2;
         }
 
-        image.setBody(body);
-
-        return image;
+        return encoded;
     }
 
     @Override
-    public void decode(BMPImage image, String outputPath) throws IOException {
+    public byte[] decode(byte[] imagePixels) {
 
-        byte[] body = image.getBody();
-        int dataLength = body.length / 2;
+        int dataLength = imagePixels.length / 2;
         byte[] extracted = new byte[dataLength];
-        int byteIndex = 0;
+        int decoIndex = 0;
 
-        for (int i = 0; i < body.length; i += 2) {
-            int highNibble = body[i] & 0x0F;
-            int lowNibble = body[i + 1] & 0x0F;
+        for (int encoIndex = 0; encoIndex < imagePixels.length; encoIndex += 2) {
 
-            extracted[byteIndex++] = (byte) ((highNibble << 4) | lowNibble);
+            int highNibble = imagePixels[encoIndex]     & 0x0F;
+            int lowNibble  = imagePixels[encoIndex + 1] & 0x0F;
+
+            extracted[decoIndex++] = (byte) ((highNibble << 4) | lowNibble);
         }
-        StegoUtils.ExtractedData data = StegoUtils.extractDataBlock(extracted);
-        String finalPath = outputPath;
 
-        if (data.extension() != null && !data.extension().isEmpty())
-            finalPath += data.extension();
-
-        Files.write(Path.of(finalPath), data.fileData());
+        return extracted;
     }
 }

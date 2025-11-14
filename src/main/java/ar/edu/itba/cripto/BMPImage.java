@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 
 public class BMPImage {
+
     private static final int BMP_HEADER_LENGTH = 54;
     private byte[] header;
     private byte[] body;
@@ -14,11 +15,14 @@ public class BMPImage {
     private int compression;
 
     public BMPImage(String path) throws IOException {
+
         try (RandomAccessFile file = new RandomAccessFile(path, "r")) {
+
             header = new byte[BMP_HEADER_LENGTH];
             file.readFully(header);
 
             int dataOffset = readIntLE(header, 10);
+
             width = readIntLE(header, 18);
             height = readIntLE(header, 22);
             bitsPerPixel = readShortLE(header, 28);
@@ -56,22 +60,16 @@ public class BMPImage {
     public int getBitsPerPixel() { return bitsPerPixel; }
     public int getCompression() { return compression; }
 
-    public int getCapacityBytesForLSB1() {
-        return body.length / 8;         // 1 bit por byte de pixel
-    }
-
-    public int getCapacityBytesForLSB4() {
-        return (body.length * 4) / 8;   // 4 bits por byte de pixel
-    }
-
     public void setBody(byte[] data) {
-        if (data.length != body.length) {
+
+        if (data.length != body.length)
             throw new IllegalArgumentException("El nuevo cuerpo debe tener el mismo tamaño que el original.");
-        }
+
         this.body = data;
     }
 
     public void save(String path) throws IOException {
+
         try (FileOutputStream output = new FileOutputStream(path)) {
             output.write(header);
             output.write(body);
@@ -80,6 +78,7 @@ public class BMPImage {
 
     @Override
     public String toString() {
+
         return String.format("BMPImage [width=%d, height=%d, bpp=%d, compression=%d, bodySize=%d]",
                 width, height, bitsPerPixel, compression, body.length);
     }

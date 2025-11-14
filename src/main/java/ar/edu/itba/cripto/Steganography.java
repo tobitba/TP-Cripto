@@ -4,13 +4,12 @@ import ar.edu.itba.cripto.actions.Analyzer;
 import ar.edu.itba.cripto.actions.Embedder;
 import ar.edu.itba.cripto.actions.Extractor;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 public class Steganography {
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
         if (args.length == 0) {
             printProgramUsage();
             System.exit(1);
