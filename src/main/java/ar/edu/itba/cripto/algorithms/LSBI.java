@@ -19,6 +19,7 @@ public class LSBI implements IStegoAlgorithm {
             throw new IllegalArgumentException("El archivo es demasiado grande para ocultarse en esta imagen.\nCapacidad máxima: " + capacityBytes + " bytes, Tamaño requerido: " + dataToHide.length + " bytes.");
 
         SortedMap<Integer, Integer> patternChangeCount = new TreeMap<>();
+        SortedMap<Integer, Integer> patternUnchangedCount = new TreeMap<>();
         Map<Integer, Boolean> patternInvertCondition = new HashMap<>();
         byte[] encoded = imagePixels.clone();
         int imagePixelsIndex = PATTERNS;
@@ -34,13 +35,15 @@ public class LSBI implements IStegoAlgorithm {
 
                 if (dataBit != (imagePixels[imagePixelsIndex] & 1))
                 { patternChangeCount.put(pattern, patternChangeCount.getOrDefault(pattern, 0) + 1); }
+                else
+                { patternUnchangedCount.put(pattern, patternUnchangedCount.getOrDefault(pattern, 0) + 1); }
 
                 imagePixelsIndex++;
             }
         }
 
         for (Map.Entry<Integer, Integer> entry : patternChangeCount.entrySet()) {
-            Boolean patternInvertConditionValue = entry.getValue() > capacityBytes / 2 / PATTERNS;
+            Boolean patternInvertConditionValue = entry.getValue() > patternUnchangedCount.getOrDefault(entry.getKey(), 0);
             patternInvertCondition.put(entry.getKey(), patternInvertConditionValue);
         }
 
@@ -56,19 +59,16 @@ public class LSBI implements IStegoAlgorithm {
                 int pattern = (encoded[imagePixelsIndex] & PATTERN_BIT_MASK) >> 1;
 
                 if (patternInvertCondition.getOrDefault(pattern, false))
-                { dataBit = 1 - dataBit; }
+                { dataBit ^= 1; }
 
                 encoded[imagePixelsIndex] = (byte) ((encoded[imagePixelsIndex] & 0xFE) | dataBit);
                 imagePixelsIndex++;
             }
         }
 
-        imagePixelsIndex = 0;
-
-        for (Map.Entry<Integer, Integer> entry : patternChangeCount.entrySet()) {
-            int invertedDataBit = patternInvertCondition.getOrDefault(entry.getKey(), false) ? 1 : 0;
+        for (imagePixelsIndex = 0; imagePixelsIndex < PATTERNS; imagePixelsIndex++) {
+            int invertedDataBit = patternInvertCondition.getOrDefault(imagePixelsIndex, false) ? 1 : 0;
             encoded[imagePixelsIndex] = (byte) ((encoded[imagePixelsIndex] & 0xFE) | invertedDataBit);
-            imagePixelsIndex++;
         }
 
         return encoded;
@@ -84,7 +84,7 @@ public class LSBI implements IStegoAlgorithm {
             patternInvertCondition.put(imagePixelsIndex, (imagePixels[imagePixelsIndex] & 1) == 1);
         }
 
-        int capacityBytes = ((imagePixels.length - PATTERNS ) * 2) / 3 / 8; // Pixeles rojos no codifican data
+        int capacityBytes = ((imagePixels.length - PATTERNS) * 2) / 3 / 8; // Pixeles rojos no codifican data
         byte[] extracted = new byte[capacityBytes];
         int dataPos = 0;
         int bitsBuffer = 0;

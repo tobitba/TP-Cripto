@@ -38,7 +38,7 @@ public class LSB4 implements IStegoAlgorithm {
             int highNibble = imagePixels[encoIndex]     & 0x0F;
             int lowNibble  = imagePixels[encoIndex + 1] & 0x0F;
 
-            extracted[decoIndex++] = (byte) ((highNibble << 4) | lowNibble);
+            extracted[decoIndex++] = (byte) (((highNibble << 4) & 0xF0) | lowNibble);
         }
 
         return extracted;
