@@ -43,14 +43,14 @@ public class Extractor {
             if (rawExtracted.length < 4)
                 throw new IllegalArgumentException("La imagen no contiene datos cifrados válidos.");
 
-            int cipherLen = StegoUtils.bytesToInt(rawExtracted);
-            byte[] ciphertext = new byte[cipherLen];
+            int cipherLength = StegoUtils.bytesToInt(rawExtracted);
+            byte[] cipherText = new byte[cipherLength];
 
-            if (cipherLen <= 0 || cipherLen > rawExtracted.length - 4)
+            if (cipherLength <= 0 || cipherLength > rawExtracted.length - 4)
                 throw new IllegalArgumentException("Tamaño de ciphertext inválido.");
 
-            System.arraycopy(rawExtracted, 4, ciphertext, 0, cipherLen);
-            dataBlock = Encryption.decrypt(ciphertext, encAlgorithm, mode, password);
+            System.arraycopy(rawExtracted, 4, cipherText, 0, cipherLength);
+            dataBlock = Encryption.decrypt(cipherText, encAlgorithm, mode, password);
 
         } else {
             dataBlock = rawExtracted;

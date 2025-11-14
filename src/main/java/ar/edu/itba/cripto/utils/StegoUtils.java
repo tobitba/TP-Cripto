@@ -53,7 +53,8 @@ public class StegoUtils {
         int extensionStartPosition = 4 + size;
         int extensionEndPosition = extensionStartPosition;
 
-        while (extensionEndPosition < hiddenData.length && hiddenData[extensionEndPosition] != 0) { extensionEndPosition++; }
+        while (extensionEndPosition < hiddenData.length && hiddenData[extensionEndPosition] != 0)
+        { extensionEndPosition++; }
 
         String extension = new String(Arrays.copyOfRange(hiddenData, extensionStartPosition, extensionEndPosition), StandardCharsets.UTF_8);
 
