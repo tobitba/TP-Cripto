@@ -17,6 +17,11 @@ mvn clean install
 
 ## 🏃 Ejecución
 
+Primero se debe dar permisos al ejecutable:
+```shell
+chmod u+x run.sh
+```
+
 ### 🎈 Modos
 **Modo ocultamiento de un archivo en un .bmp**
 
@@ -32,7 +37,7 @@ Parámetros:
 
 Ejemplo:
 ```shell
-./run.sh -embed –in "mensaje1.txt" –p "imagen1.bmp" -out "imagenmas1.bmp" –steg LSBI –a 3des –m cbc -pass "oculto"
+./run.sh -embed -in "README.md" -p "ejemplo/lado.bmp" -out "ladobmp.bmp" -steg LSBI -a 3des -m cbc -pass "oculto"
 ```
 
 **Extraer de un archivo .bmp un archivo oculto**
@@ -48,6 +53,6 @@ Parámetros:
 
 Ejemplo
 ```shell
-–extract –p "imagenmas1.bmp" -out "mensaje1" –steg LSBI –a 3des –m cbc -pass "oculto"
+./run.sh -extract -p "ejemplo/ladoLSB1.bmp" -out "mensaje1" -steg LSB1
 ```
 

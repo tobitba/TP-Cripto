@@ -1,6 +1,5 @@
 package ar.edu.itba.cripto;
 
-import ar.edu.itba.cripto.actions.Analyzer;
 import ar.edu.itba.cripto.actions.Embedder;
 import ar.edu.itba.cripto.actions.Extractor;
 
@@ -22,8 +21,6 @@ public class Steganography {
             new Embedder().embed(params);
         } else if (params.containsKey("-extract")) {
             new Extractor().extract(params);
-        } else if (params.containsKey("-analyze")) {
-            new Analyzer().analyze(params);
         } else {
             System.out.println("Debe especificar una acción (-embed | -extract | -analyze)");
             printProgramUsage();
@@ -36,7 +33,6 @@ public class Steganography {
         System.out.println("Uso del programa:");
         System.out.println("  -embed   : Ocultar un archivo dentro de un BMP");
         System.out.println("  -extract : Extraer un archivo oculto de un BMP");
-        System.out.println("  -analyze : Analizar un BMP para detectar esteganografía");
         System.out.println();
     }
 
