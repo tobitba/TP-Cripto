@@ -40,7 +40,7 @@ Ejemplo:
 ./run.sh -embed -in "README.md" -p "ejemplo/lado.bmp" -out "ladobmp.bmp" -steg LSBI -a 3des -m cbc -pass "oculto"
 ```
 
-**Extraer de un archivo .bmp un archivo oculto**
+**Modo extraer de un archivo .bmp un archivo oculto**
 
 Parámetros:
 - `-extract`: Indica que se va a extraer información.
