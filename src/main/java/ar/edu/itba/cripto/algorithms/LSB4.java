@@ -33,7 +33,7 @@ public class LSB4 implements IStegoAlgorithm {
         byte[] extracted = new byte[dataLength];
         int decoIndex = 0;
 
-        for (int encoIndex = 0; encoIndex < imagePixels.length; encoIndex += 2) {
+        for (int encoIndex = 0; decoIndex < dataLength && encoIndex + 1 < imagePixels.length; encoIndex += 2) {
 
             int highNibble = imagePixels[encoIndex]     & 0x0F;
             int lowNibble  = imagePixels[encoIndex + 1] & 0x0F;
